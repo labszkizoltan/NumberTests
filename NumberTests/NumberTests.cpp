@@ -8,7 +8,7 @@ int main()
 
 	//BigDecimal bd1("00123");
 	//BigDecimal bd2("9876543210");
-	BigDecimal bd1("191");
+	BigDecimal bd1("-191");
 	BigDecimal bd2("890");
 
 	// auto digit1 = bd2[1];

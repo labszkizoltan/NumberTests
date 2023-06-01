@@ -18,6 +18,10 @@ public:
 	DIGIT_TYPE operator[](int i) const;
 
 	BigDecimal& operator+=(const BigDecimal& n);
+	BigDecimal& operator-=(const BigDecimal& n);
+	BigDecimal& operator*=(const BigDecimal& n);
+	BigDecimal& operator/=(const BigDecimal& n);
+
 
 	void operator++();
 	bool operator==(const BigDecimal& other);
@@ -25,13 +29,20 @@ public:
 	bool operator>(const BigDecimal& other);
 
 private:
+	// BigDecimal AbsSum(BigDecimal& other);
+	// BigDecimal AbsDif(BigDecimal& other);
+
+
 	void Normalize();
 	void StripLeadingZeros();
 
 
 private:
 	std::vector<DIGIT_TYPE> m_Digits;
+	// bool m_Sign = true; // true: positive, false: negative
 
+
+friend std::ostream& operator<<(std::ostream& stream, const BigDecimal& n);
 
 };
 

@@ -11,11 +11,16 @@ BigDecimal::BigDecimal()
 
 BigDecimal::BigDecimal(const std::string& number)
 {
-	m_Digits = std::vector<DIGIT_TYPE>(number.length());
-	for (int i = 0; i < number.length(); i++)
+	int startIdx = 0;
+	// 45 is the ascii code for "-"
+	if (number[0] == 45)
 	{
-		m_Digits[number.length() - 1 - i] = (int)number[i]-48;
+		m_Sign = false;
+		startIdx = 1;
 	}
+	m_Digits = std::vector<DIGIT_TYPE>(number.length()-startIdx);
+	for (int i = 0; i < (number.length() - startIdx); i++)
+		m_Digits[number.length() - startIdx - 1 - i] = (DIGIT_TYPE)(number[i+startIdx]-48);
 	StripLeadingZeros();
 }
 
@@ -38,20 +43,37 @@ BigDecimal& BigDecimal::operator+=(const BigDecimal& n)
 	int minDigits = std::min<int>(m_Digits.size(), n.Digits());
 //	int iterCount = m_Digits.size() < n.Digits() ?
 	for (int i = 0; i < minDigits; i++)
-	{
 		m_Digits[i] += n.m_Digits[i];
-	}
 
 	Normalize();
 	return *this;
 }
 
+BigDecimal& BigDecimal::operator-=(const BigDecimal& n)
+{
+	// TODO: insert return statement here
+
+	return *this;
+}
+
+BigDecimal& BigDecimal::operator*=(const BigDecimal& n)
+{
+	// TODO: insert return statement here
+
+	return *this;
+}
+
+BigDecimal& BigDecimal::operator/=(const BigDecimal& n)
+{
+	// TODO: insert return statement here
+
+	return *this;
+}
+
 void BigDecimal::operator++()
-//BigDecimal& BigDecimal::operator++()
 {
 	m_Digits[0]++;
 	Normalize();
-	// return *this;
 }
 
 bool BigDecimal::operator==(const BigDecimal& other)
@@ -80,8 +102,6 @@ bool BigDecimal::operator<(const BigDecimal& other)
 		int b = other.m_Digits[Digits() - 1 - i];
 		if (a != b)
 			return a < b;
-		// if (m_Digits[Digits() - 1 - i] < other.m_Digits[Digits() - 1 - i])
-		// return true;
 	}
 
 	return false;
@@ -103,22 +123,39 @@ bool BigDecimal::operator>(const BigDecimal& other)
 	return false;
 }
 
+/*
+BigDecimal BigDecimal::AbsSum(BigDecimal& other)
+{
+	return BigDecimal();
+}
+
+BigDecimal BigDecimal::AbsDif(BigDecimal& other)
+{
+	return BigDecimal();
+}
+*/
+
 void BigDecimal::Normalize()
 {
 	for (int i = 0; i < m_Digits.size()-1; i++)
 	{
-		while (m_Digits[i] > 9) { m_Digits[i+1]++; m_Digits[i] -= 10; }
+		while (m_Digits[i] > 9) { m_Digits[i + 1]++; m_Digits[i] -= 10; }
+		while (m_Digits[i] < 0) { m_Digits[i + 1]--; m_Digits[i] += 10; }
 	}
 	if (m_Digits[m_Digits.size()-1] > 9)
 	{
 		m_Digits[m_Digits.size() - 1] -= 10;
 		m_Digits.push_back(1);
-		// // this seems to be working, but perhaps a bit overcomplicated, I dont think the remainder can be more than 10
-		// m_Digits.push_back(m_Digits[m_Digits.size() - 1] / 10);
-		// m_Digits[m_Digits.size() - 2] -= 10 * m_Digits[m_Digits.size() - 1];
 		Normalize();
 	}
-
+	else if (m_Digits[m_Digits.size() - 1] < 0)
+	{
+		// // im not sure yet what to do here
+		// m_Digits[m_Digits.size() - 1] -= 10;
+		// m_Digits.push_back(1);
+		// Normalize();
+	}
+	StripLeadingZeros();
 }
 
 void BigDecimal::StripLeadingZeros()
@@ -128,19 +165,13 @@ void BigDecimal::StripLeadingZeros()
 
 std::ostream& operator<<(std::ostream& stream, const BigDecimal& n)
 {
+	// if (!n.m_Sign)
+	// 	stream << "-";
 	for (int i = 0; i < n.Digits(); i++)
-	{
-		stream << n[i];
-		// stream << n[n.Digits()-1-i];
-	}
+		stream << (int)n[i];
+
 	return stream;
 }
-
-// bool operator<(BigDecimal& n1, BigDecimal& n2)
-// {
-// 	return n1<n2;
-// }
-
 
 
 
