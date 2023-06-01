@@ -12,6 +12,7 @@ class BigDecimal
 public:
 	BigDecimal();
 	BigDecimal(const std::string& number);
+	BigDecimal(const BigDecimal& other);
 	~BigDecimal() = default;
 
 	int Digits() const;
@@ -28,10 +29,12 @@ public:
 	bool operator<(const BigDecimal& other);
 	bool operator>(const BigDecimal& other);
 
-private:
-	// BigDecimal AbsSum(BigDecimal& other);
-	// BigDecimal AbsDif(BigDecimal& other);
+	// multiply with a scalar and return a new BigDecimal as result
+	BigDecimal operator*(const DIGIT_TYPE c);
 
+
+private:
+	void ShiftDigits(int i);
 
 	void Normalize();
 	void StripLeadingZeros();
@@ -39,16 +42,25 @@ private:
 
 private:
 	std::vector<DIGIT_TYPE> m_Digits;
-	// bool m_Sign = true; // true: positive, false: negative
 
 
 friend std::ostream& operator<<(std::ostream& stream, const BigDecimal& n);
+
+friend BigDecimal operator+(const BigDecimal& n1, const BigDecimal& n2);
+friend BigDecimal operator-(const BigDecimal& n1, const BigDecimal& n2);
+friend BigDecimal operator*(const BigDecimal& n1, const BigDecimal& n2);
+friend BigDecimal operator/(const BigDecimal& n1, const BigDecimal& n2);
+
 
 };
 
 // related, non-member functions
 std::ostream& operator<<(std::ostream& stream, const BigDecimal& n);
 
+BigDecimal operator+(const BigDecimal& n1, const BigDecimal& n2);
+BigDecimal operator-(const BigDecimal& n1, const BigDecimal& n2);
+BigDecimal operator*(const BigDecimal& n1, const BigDecimal& n2);
+BigDecimal operator/(const BigDecimal& n1, const BigDecimal& n2);
 
 
 #endif // BIG_DECIMAL_H

@@ -12,16 +12,17 @@ BigDecimal::BigDecimal()
 BigDecimal::BigDecimal(const std::string& number)
 {
 	int startIdx = 0;
-	// 45 is the ascii code for "-"
-	if (number[0] == 45)
-	{
-		m_Sign = false;
-		startIdx = 1;
-	}
 	m_Digits = std::vector<DIGIT_TYPE>(number.length()-startIdx);
 	for (int i = 0; i < (number.length() - startIdx); i++)
 		m_Digits[number.length() - startIdx - 1 - i] = (DIGIT_TYPE)(number[i+startIdx]-48);
 	StripLeadingZeros();
+}
+
+BigDecimal::BigDecimal(const BigDecimal& other)
+{
+	m_Digits = std::vector<DIGIT_TYPE>(other.Digits());
+	for (int i = 0; i < Digits(); i++)
+		m_Digits[i] = other.m_Digits[i];
 }
 
 int BigDecimal::Digits() const
@@ -31,19 +32,17 @@ int BigDecimal::Digits() const
 
 DIGIT_TYPE BigDecimal::operator[](int i) const
 {
+	if ((m_Digits.size() - 1 - i) >= m_Digits.size())
+		return 0;
 	return m_Digits[m_Digits.size() - 1 - i];
-	// return m_Digits[i];
 }
 
 BigDecimal& BigDecimal::operator+=(const BigDecimal& n)
 {
-	int maxDigits = std::max<int>(m_Digits.size(), n.Digits());
-	while (m_Digits.size() < maxDigits) { m_Digits.push_back(0); }
-
-	int minDigits = std::min<int>(m_Digits.size(), n.Digits());
-//	int iterCount = m_Digits.size() < n.Digits() ?
-	for (int i = 0; i < minDigits; i++)
-		m_Digits[i] += n.m_Digits[i];
+	int maxDigits = std::max<int>(Digits(), n.Digits());
+	while (Digits() < maxDigits) { m_Digits.push_back(0); }
+	for (int i = 0; i < Digits(); i++)
+		m_Digits[Digits()-1-i] += n[i];
 
 	Normalize();
 	return *this;
@@ -51,21 +50,38 @@ BigDecimal& BigDecimal::operator+=(const BigDecimal& n)
 
 BigDecimal& BigDecimal::operator-=(const BigDecimal& n)
 {
-	// TODO: insert return statement here
+	int maxDigits = std::max<int>(Digits(), n.Digits());
+	while (Digits() < maxDigits) { m_Digits.push_back(0); }
+	for (int i = 0; i < Digits(); i++)
+		m_Digits[Digits() - 1 - i] -= n[i];
 
+	Normalize();
 	return *this;
 }
 
 BigDecimal& BigDecimal::operator*=(const BigDecimal& n)
 {
-	// TODO: insert return statement here
+	// TODO: insert return statement here - this will be complicated,
+	// for the simpler solution i need a BigDecimal * DIGIT_TYPE = BigDecimal type of function
+	// the more advanced solution is the Karatsuba algorithm
 
+	BigDecimal resultSum;
+
+	for (int i = 0; i < n.Digits(); i++)
+	{
+		BigDecimal tmp = (*this * n[i]);
+		tmp.ShiftDigits(n.Digits()-1-i);
+		resultSum += tmp; // here we have a problem with the += operator
+	}
+
+	m_Digits = resultSum.m_Digits;
 	return *this;
 }
 
 BigDecimal& BigDecimal::operator/=(const BigDecimal& n)
 {
-	// TODO: insert return statement here
+	// TODO: insert return statement here - this is also complicated,
+	// I need to repeatedly subtract n, until the remainder is smaller than n
 
 	return *this;
 }
@@ -92,8 +108,10 @@ bool BigDecimal::operator==(const BigDecimal& other)
 
 bool BigDecimal::operator<(const BigDecimal& other)
 {
-	if(Digits() < other.Digits())
+	if (Digits() < other.Digits())
 		return true;
+	else if (Digits() > other.Digits())
+		return false;
 
 	for (int i = 0; i < Digits(); i++)
 	{
@@ -123,54 +141,97 @@ bool BigDecimal::operator>(const BigDecimal& other)
 	return false;
 }
 
-/*
-BigDecimal BigDecimal::AbsSum(BigDecimal& other)
+
+BigDecimal BigDecimal::operator*(const DIGIT_TYPE c)
 {
-	return BigDecimal();
+	BigDecimal result(*this);
+	for (int i = 0; i < Digits(); i++)
+		result.m_Digits[i] *= c;
+
+	result.Normalize();
+	return result;
 }
 
-BigDecimal BigDecimal::AbsDif(BigDecimal& other)
+void BigDecimal::ShiftDigits(int i)
 {
-	return BigDecimal();
+	for (int k = 0; k < i; k++)
+		m_Digits.push_back(0);
+	std::rotate(m_Digits.rbegin(), m_Digits.rbegin() + i, m_Digits.rend());
 }
-*/
 
 void BigDecimal::Normalize()
 {
+	// in case of most digits, just subtract ten from the digits until we get to the 0-9 interval
+	// and each time add one to the next digit
 	for (int i = 0; i < m_Digits.size()-1; i++)
 	{
 		while (m_Digits[i] > 9) { m_Digits[i + 1]++; m_Digits[i] -= 10; }
 		while (m_Digits[i] < 0) { m_Digits[i + 1]--; m_Digits[i] += 10; }
 	}
+	// when the last digit is more than 10, create one more digit and put the carry-over term into it
 	if (m_Digits[m_Digits.size()-1] > 9)
 	{
 		m_Digits[m_Digits.size() - 1] -= 10;
 		m_Digits.push_back(1);
 		Normalize();
 	}
+	// when the digit at the largest decimal is negative after normalizing everything before,
+	// than the whole number is negative, that I dont want to allow, so I floor the result at 0
 	else if (m_Digits[m_Digits.size() - 1] < 0)
 	{
 		// // im not sure yet what to do here
 		// m_Digits[m_Digits.size() - 1] -= 10;
 		// m_Digits.push_back(1);
 		// Normalize();
+		m_Digits = std::vector<DIGIT_TYPE>(1);
 	}
 	StripLeadingZeros();
 }
 
 void BigDecimal::StripLeadingZeros()
 {
-	while (m_Digits[m_Digits.size() - 1] == 0) { m_Digits.pop_back(); }
+	while (m_Digits[m_Digits.size() - 1] == 0 && m_Digits.size() > 1) { m_Digits.pop_back(); }
 }
+
+
+
+//-----------------------------------------//
+//----- Related, non-member functions -----//
+//-----------------------------------------//
+
 
 std::ostream& operator<<(std::ostream& stream, const BigDecimal& n)
 {
-	// if (!n.m_Sign)
-	// 	stream << "-";
 	for (int i = 0; i < n.Digits(); i++)
 		stream << (int)n[i];
 
 	return stream;
+}
+
+BigDecimal operator+(const BigDecimal& n1, const BigDecimal& n2)
+{
+	BigDecimal result = BigDecimal(n1);
+	result += n2;
+	return result;
+}
+
+BigDecimal operator-(const BigDecimal& n1, const BigDecimal& n2)
+{
+	BigDecimal result = BigDecimal(n1);
+	result -= n2;
+	return result;
+}
+
+BigDecimal operator*(const BigDecimal& n1, const BigDecimal& n2)
+{
+	BigDecimal result = BigDecimal(n1);
+	result *= n2;
+	return result;
+}
+
+BigDecimal operator/(const BigDecimal& n1, const BigDecimal& n2)
+{
+	return BigDecimal();
 }
 
 
