@@ -25,16 +25,23 @@ public:
 
 
 	void operator++();
-	bool operator==(const BigDecimal& other);
-	bool operator<(const BigDecimal& other);
-	bool operator>(const BigDecimal& other);
+	bool operator==(const BigDecimal& other) const;
+	bool operator<(const BigDecimal& other) const;
+	bool operator>(const BigDecimal& other) const;
+	bool operator<=(const BigDecimal& other) const;
+	bool operator>=(const BigDecimal& other) const;
 
 	// multiply with a scalar and return a new BigDecimal as result
 	BigDecimal operator*(const DIGIT_TYPE c);
 
+	void Double();
+	void Halve();
+	void Square();
+	void SquareRoot();
 
 private:
 	void ShiftDigits(int i);
+
 
 	void Normalize();
 	void StripLeadingZeros();
